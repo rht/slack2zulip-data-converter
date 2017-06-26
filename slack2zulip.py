@@ -1,12 +1,15 @@
+#!/usr/bin/env python
 import os
 import json
 import hashlib
+import sys
+import argparse
 
 
-def users2zerver_userprofile(realm_id):
+def users2zerver_userprofile(slack_dir, realm_id):
     # type: () -> None
     print('######### IMPORTING USERS STARTED #########\n')
-    users = json.load(open('slack/users.json'))
+    users = json.load(open(slack_dir + '/users.json'))
     zerver_userprofile = []
     added_users = {}
     user_id_count = 1
@@ -91,10 +94,10 @@ def users2zerver_userprofile(realm_id):
     return zerver_userprofile, added_users
 
 #def create_streams_and_add_subscribers(added_users):
-def channels2zerver_stream(realm_id):
+def channels2zerver_stream(slack_dir, realm_id):
     # type: (Dict[str, Dict[str, str]]) -> None
     print('######### IMPORTING CHANNELS STARTED #########\n')
-    channels = json.load(open('slack/channels.json'))
+    channels = json.load(open(slack_dir + '/channels.json'))
     added_channels = {}
     zerver_stream = []
     stream_id_count = 1
@@ -144,12 +147,12 @@ def channels2zerver_stream(realm_id):
     print('######### IMPORTING STREAMS FINISHED #########\n')
     return zerver_stream, added_channels
 
-def channelmessage2zerver_message(channel, added_users, added_channels):
-    json_names = os.listdir('slack/' + channel)
+def channelmessage2zerver_message(slack_dir, channel, added_users, added_channels):
+    json_names = os.listdir(slack_dir + '/' + channel)
     zerver_message = []
     msg_id_count = 1
     for json_name in json_names:
-        msgs = json.load(open('slack/%s/%s' % (channel, json_name)))
+        msgs = json.load(open(slack_dir + '/%s/%s' % (channel, json_name)))
         for msg in msgs:
             text = msg['text']
             zulip_message = dict(
@@ -170,7 +173,7 @@ def channelmessage2zerver_message(channel, added_users, added_channels):
             zerver_message.append(zulip_message)
     return zerver_message
 
-def main():
+def main(slack_dir):
     # type: () -> None
     DOMAIN_NAME = "zulipchat.com"
     REALM_ID = 1
@@ -230,13 +233,13 @@ def main():
             zerver_realmemoji=[],
             )
 
-    zerver_userprofile, added_users = users2zerver_userprofile(REALM_ID)
+    zerver_userprofile, added_users = users2zerver_userprofile(slack_dir, REALM_ID)
     realm['zerver_userprofile'] = zerver_userprofile
 
     # TODO generate zerver_subscription from zerver_userprofile
     # TODO generate zerver_recipient from zerver_userprofile
 
-    zerver_stream, added_channels = channels2zerver_stream(REALM_ID)
+    zerver_stream, added_channels = channels2zerver_stream(slack_dir, REALM_ID)
     realm['zerver_stream'] = zerver_stream
     print(realm)
     print()
@@ -246,11 +249,15 @@ def main():
     zerver_message = []
     # TODO map zerver_usermessage
     for channel in added_channels.keys():
-        zerver_message.append(channelmessage2zerver_message(channel,
+        zerver_message.append(channelmessage2zerver_message(slack_dir, channel,
             added_users, added_channels))
     message_json['zerver_message'] = zerver_message
 
     print(message_json)
+    sys.exit(0)
 
 if __name__ == '__main__':
-    main()
+    description = ("script to convert Slack export data into Zulip export data")
+    parser = argparse.ArgumentParser(description=description)
+    slack_dir = sys.argv[1]
+    main(slack_dir)
