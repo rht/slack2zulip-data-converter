@@ -1,0 +1,11 @@
+[
+    {
+        "user_id": 0,
+        "user_name": "slack",
+        "date": "1498401043",
+        "change_type": "added",
+        "service_id": "202634974129",
+        "service_type": "Google Drive",
+        "scope": "files:write:user"
+    }
+]

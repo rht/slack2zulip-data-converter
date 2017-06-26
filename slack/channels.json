@@ -1,0 +1,44 @@
+[
+    {
+        "id": "C5Z73A7RA",
+        "name": "general",
+        "created": "1498401043",
+        "creator": "U6006P1CN",
+        "is_archived": false,
+        "is_general": true,
+        "members": [
+            "U6006P1CN"
+        ],
+        "topic": {
+            "value": "Company-wide announcements and work-based matters",
+            "creator": "U6006P1CN",
+            "last_set": "1498401043"
+        },
+        "purpose": {
+            "value": "This channel is for team-wide communication and announcements. All team members are in this channel.",
+            "creator": "U6006P1CN",
+            "last_set": "1498401043"
+        }
+    },
+    {
+        "id": "C5Z5N7R8A",
+        "name": "random",
+        "created": "1498401043",
+        "creator": "U6006P1CN",
+        "is_archived": false,
+        "is_general": false,
+        "members": [
+            "U6006P1CN"
+        ],
+        "topic": {
+            "value": "Non-work banter and water cooler conversation",
+            "creator": "U6006P1CN",
+            "last_set": "1498401043"
+        },
+        "purpose": {
+            "value": "A place for non-work-related flimflam, faffing, hodge-podge or jibber-jabber you'd prefer to keep out of more focused work-related channels.",
+            "creator": "U6006P1CN",
+            "last_set": "1498401043"
+        }
+    }
+]
