@@ -4,6 +4,7 @@ import json
 import hashlib
 import sys
 import argparse
+import shutil
 
 
 def users2zerver_userprofile(slack_dir, realm_id):
@@ -178,6 +179,14 @@ def main(slack_dir):
     DOMAIN_NAME = "zulipchat.com"
     REALM_ID = 1
     REALM_NAME = "FleshEatingBatswithFangs"
+
+    # Make sure the directory output is clean
+    output_dir = 'zulip_data'
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+    else:
+        os.makedirs(output_dir)
+
     realm = dict(
             zerver_defaultstream=[],  # TODO
             zerver_client=[{"name": "populate_db", "id": 1},
@@ -230,8 +239,7 @@ def main(slack_dir):
             zerver_userprofile_crossrealm=[],  # TODO
             zerver_useractivityinterval=[],
             zerver_realmfilter=[],
-            zerver_realmemoji=[],
-            )
+            zerver_realmemoji=[])
 
     zerver_userprofile, added_users = users2zerver_userprofile(slack_dir, REALM_ID)
     realm['zerver_userprofile'] = zerver_userprofile
@@ -241,8 +249,8 @@ def main(slack_dir):
 
     zerver_stream, added_channels = channels2zerver_stream(slack_dir, REALM_ID)
     realm['zerver_stream'] = zerver_stream
-    print(realm)
-    print()
+    # IO
+    json.dump(realm, open(output_dir + '/realm.json', 'w'))
 
     # now for message.json
     message_json = {}
@@ -250,10 +258,14 @@ def main(slack_dir):
     # TODO map zerver_usermessage
     for channel in added_channels.keys():
         zerver_message.append(channelmessage2zerver_message(slack_dir, channel,
-            added_users, added_channels))
+                              added_users, added_channels))
     message_json['zerver_message'] = zerver_message
+    # IO
+    json.dump(message_json, open(output_dir + '/message.json', 'w'))
 
-    print(message_json)
+    # TODO
+    # attachments
+
     sys.exit(0)
 
 if __name__ == '__main__':
