@@ -7,6 +7,7 @@ import argparse
 import shutil
 
 
+# Transported from https://github.com/zulip/zulip/blob/master/zerver/lib/export.py
 def rm_tree(path):
     # type: (str) -> None
     if os.path.exists(path):
@@ -100,7 +101,6 @@ def users2zerver_userprofile(slack_dir, realm_id):
     print('######### IMPORTING USERS FINISHED #########\n')
     return zerver_userprofile, added_users
 
-#def create_streams_and_add_subscribers(added_users):
 def channels2zerver_stream(slack_dir, realm_id):
     # type: (Dict[str, Dict[str, str]]) -> None
     print('######### IMPORTING CHANNELS STARTED #########\n')
@@ -182,9 +182,15 @@ def channelmessage2zerver_message(slack_dir, channel, added_users, added_channel
 
 def main(slack_dir):
     # type: () -> None
+    from datetime import datetime
     DOMAIN_NAME = "zulipchat.com"
     REALM_ID = 1
     REALM_NAME = "FleshEatingBatswithFangs"
+    zerver_realm_skeleton = json.load(open('zerver_realm_skeleton.json'))
+    zerver_realm_skeleton[0]['id'] = REALM_ID
+    zerver_realm_skeleton[0]['string_id'] = 'zulip'  # subdomain / short_name of realm
+    zerver_realm_skeleton[0]['name'] = REALM_NAME
+    zerver_realm_skeleton[0]['date_created'] = datetime.utcnow().timestamp()
 
     # Make sure the directory output is clean
     output_dir = 'zulip_data'
@@ -203,42 +209,7 @@ def main(slack_dir):
                                  "domain": DOMAIN_NAME,
                                  "id": REALM_ID}],
             zerver_useractivity=[],
-            zerver_realm=[{
-                          "message_retention_days": None,
-                          "inline_image_preview": True,
-                          "name_changes_disabled": False,
-                          "string_id": REALM_NAME,  # TODO what is the difference between this and real name below?
-                          "icon_version": 1,
-                          "waiting_period_threshold": 0,
-                          "email_changes_disabled": False,
-                          "deactivated": False,
-                          "notifications_stream": None,
-                          "restricted_to_domain": True,
-                          "show_digest_email": True,
-                          "allow_message_editing": True,
-                          "description": "The Zulip development environment default organization.  It's great for testing!",
-                          "default_language": "en",
-                          "icon_source": "G",
-                          "invite_required": False,
-                          "invite_by_admins_only": False,
-                          "create_stream_by_admins_only": False,
-                          "mandatory_topics": False,
-                          "inline_url_embed_preview": True,
-                          "message_content_edit_limit_seconds": 600,
-                          "authentication_methods": [
-                            ["Google", True],
-                            ["Email", True],
-                            ["GitHub", True],
-                            ["LDAP", True],
-                            ["Dev", True],
-                            ["RemoteUser", True]
-                          ],
-                          "name": REALM_NAME,
-                          "org_type": 1,
-                          "add_emoji_by_admins_only": False,
-                          "date_created": 1498439472.229782,  # TODO
-                          "id": REALM_ID,
-                          }],
+            zerver_realm=zerver_realm_skeleton,
             zerver_huddle=[],  # TODO
             zerver_userprofile_crossrealm=[],  # TODO
             zerver_useractivityinterval=[],
@@ -273,6 +244,9 @@ def main(slack_dir):
     sys.exit(0)
 
 if __name__ == '__main__':
+    # from django.conf import settings
+    # settings_module = "settings.py"
+    # os.environ['DJANGO_SETTINGS_MODULE'] = settings_module
     description = ("script to convert Slack export data into Zulip export data")
     parser = argparse.ArgumentParser(description=description)
     slack_dir = sys.argv[1]
