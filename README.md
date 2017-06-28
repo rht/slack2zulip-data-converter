@@ -13,3 +13,9 @@ TODO: the intermediate step still pending
 
 To deploy the data onto an existing fresh Zulip repo,
 `./manage.py import zulip_data.zip`
+
+## References
+
+0. https://github.com/zulip/zulip/blob/master/zerver/lib/export.py
+1. https://github.com/zulip/zulip/blob/master/zerver/tests/test_export.py
+2. https://github.com/zulip/zulip/tree/master/api/integrations/slack

@@ -7,6 +7,12 @@ import argparse
 import shutil
 
 
+def rm_tree(path):
+    # type: (str) -> None
+    if os.path.exists(path):
+        shutil.rmtree(path)
+
+
 def users2zerver_userprofile(slack_dir, realm_id):
     # type: () -> None
     print('######### IMPORTING USERS STARTED #########\n')
@@ -182,10 +188,8 @@ def main(slack_dir):
 
     # Make sure the directory output is clean
     output_dir = 'zulip_data'
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
-    else:
-        os.makedirs(output_dir)
+    rm_tree(output_dir)
+    os.makedirs(output_dir)
 
     realm = dict(
             zerver_defaultstream=[],  # TODO
