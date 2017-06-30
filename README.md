@@ -47,7 +47,6 @@ Most parts of the structures can be mapped 1-to-1, with few exceptions:
    * `is_superuser`: is not used, the code uses `is_api_super_user`. See
      `zerver/views/messages.py`
    Slack's permission hierarchy is more granular.
-
    Currently the mapping is `is_owner` -> `is_realm_admin`, `is_admin` -> `is_staff`
 2. Pins/stars security model
    Slack pins are stored in each channels.
@@ -64,9 +63,14 @@ Most parts of the structures can be mapped 1-to-1, with few exceptions:
    not to pollute the thread with join/left announcement.
 https://github.com/zulip/zulip/blob/2012913cc13332aa8c14825a042ea11b4b2cfa79/zerver/lib/actions.py#L533
 6. "user agent" of a message
-   Zulip has `HUMAN_CLIENT` ("Android", "ios", "website") and `API`
+   Zulip has `populate_db`, `website`, and `API`
    Slack has none
-   comment: `is_bot` is likely redundant with this
+7. Subscriptions
+   Slack stores channel subscription in each channels, Zulip stores subscription
+   flatly in zerver_subscription in a realm
+8. Stream/channel creator
+   Slack stores channel creator in channels.json. Zulip doesn't store stream
+   creator.
 
 ## Usage
 

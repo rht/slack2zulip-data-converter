@@ -13,7 +13,7 @@ def rm_tree(path):
     if os.path.exists(path):
         shutil.rmtree(path)
 
-def users2zerver_userprofile(slack_dir, realm_id, timestamp):
+def users2zerver_userprofile(slack_dir, realm_id, timestamp, domain_name):
     # type: () -> None
     print('######### IMPORTING USERS STARTED #########\n')
     users = json.load(open(slack_dir + '/users.json'))
@@ -23,10 +23,12 @@ def users2zerver_userprofile(slack_dir, realm_id, timestamp):
     for user in users:
         slack_user_id = user['id']
         profile = user['profile']
+        DESKTOP_NOTIFICATION = True
         if 'email' not in profile:
-            email = hashlib.blake2b(user['real_name'].encode()).hexdigest() + "@zulipchat.com"
+            email = (hashlib.blake2b(user['real_name'].encode()).hexdigest() +
+                     "@%s" % domain_name)
         userprofile = dict(
-            enable_desktop_notifications=True,
+            enable_desktop_notifications=DESKTOP_NOTIFICATION,
             is_staff=user['is_admin'],
             # avatar_source='G',
             is_bot=user['is_bot'],
@@ -92,20 +94,18 @@ def users2zerver_userprofile(slack_dir, realm_id, timestamp):
     print('######### IMPORTING USERS FINISHED #########\n')
     return zerver_userprofile, added_users
 
-def channels2zerver_stream(slack_dir, realm_id):
+def channels2zerver_stream(slack_dir, realm_id, added_users):
     # type: (Dict[str, Dict[str, str]]) -> None
     print('######### IMPORTING CHANNELS STARTED #########\n')
     channels = json.load(open(slack_dir + '/channels.json'))
     added_channels = {}
     zerver_stream = []
     stream_id_count = 1
+    zerver_subscription = []
+    zerver_recipient = []
     for channel in channels:
         # slack_channel_id = channel['id']
 
-        # TODO Zulip doesn't store subscribed users in zerver_stream, should
-        # this be the case?
-        #subscribed_users = [added_users[member]['email'] for member in
-        #                    channel['members'] if member in added_users.keys()]
         stream = dict(
             realm=realm_id,
             name=channel["name"],
@@ -116,10 +116,39 @@ def channels2zerver_stream(slack_dir, realm_id):
             id=stream_id_count)
         zerver_stream.append(stream)
         added_channels[stream['name']] = stream_id_count
+
+        # subscription
+        for member in channel['members']:
+            sub = dict(
+                recipient=added_users[member],
+                notifications=False,
+                color="#c2c2c2",
+                desktop_notifications=True,
+                pin_to_top=False,
+                in_home_view=True,
+                active=True,
+                user_profile=added_users[member],
+                id=stream_id_count)  # TODO is this the correct interpretation?
+            zerver_subscription.append(sub)
+
+            # recipient
+            # type_id's
+            # 1: private message
+            # 2: stream
+            # 3: huddle
+            # TOODO currently the goal is to map Slack's standard export
+            # This defaults to 2
+            # TOODO do private message subscriptions between each users have to
+            # be generated from scratch?
+            rcpt = dict(
+                type=2,
+                type_id=stream_id_count,
+                id=added_users[member])
+            zerver_recipient.append(rcpt)
+
         stream_id_count += 1
         print(u"{} -> created\n".format(channel['name']))
 
-        # TODO map topic creator
         # TODO map Slack's topic and purpose content, 
         # e.g.
         # "topic": {
@@ -132,8 +161,9 @@ def channels2zerver_stream(slack_dir, realm_id):
         #     "creator": "U6006P1CN",
         #     "last_set": "1498401043"
         # }
+
         # TODO map Slack's pins to Zulip's stars
-        # There is the security model that Slack's pins are known to the owner
+        # There is the security model that Slack's pins are known to the team owner
         # as evident from where it is stored at (channels)
         # "pins": [
         #         {
@@ -145,7 +175,7 @@ def channels2zerver_stream(slack_dir, realm_id):
         #         }
         #         ],
     print('######### IMPORTING STREAMS FINISHED #########\n')
-    return zerver_stream, added_channels
+    return zerver_stream, added_channels, zerver_subscription, zerver_recipient
 
 def channelmessage2zerver_message(slack_dir, channel, added_users, added_channels):
     json_names = os.listdir(slack_dir + '/' + channel)
@@ -211,14 +241,14 @@ def main(slack_dir):
 
     zerver_userprofile, added_users = users2zerver_userprofile(slack_dir,
                                                                REALM_ID,
-                                                               int(NOW))
+                                                               int(NOW),
+                                                               DOMAIN_NAME)
     realm['zerver_userprofile'] = zerver_userprofile
 
-    # TODO generate zerver_subscription from zerver_userprofile
-    # TODO generate zerver_recipient from zerver_userprofile
-
-    zerver_stream, added_channels = channels2zerver_stream(slack_dir, REALM_ID)
+    zerver_stream, added_channels, zerver_subscription, zerver_recipient = channels2zerver_stream(slack_dir, REALM_ID, added_users)
     realm['zerver_stream'] = zerver_stream
+    realm['zerver_subscription'] = zerver_subscription
+    realm['zerver_recipient'] = zerver_recipient
     # IO
     json.dump(realm, open(output_dir + '/realm.json', 'w'))
 
