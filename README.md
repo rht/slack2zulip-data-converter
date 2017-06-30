@@ -26,6 +26,48 @@ There are two approaches:
 
 ## Term Mapping
 
+Most parts of the structures can be mapped 1-to-1, with few exceptions:
+1. Permission hierarchy
+   in Slack[6]:
+   * `is_primary_primary` = `is_owner` + can delete team.
+   * `is_owner` = `is_admin` + can set (payments/billing, team authentication,
+                  message and file retention, ...)
+   * `is_admin` = `member` + can manage members + can manage channels + can handle
+                maintenance functions for the team
+   * `member` = can join public channel + can send message + can upload files + ..
+   * `is_restricted` = can't set topic/purpose of a channel
+   * `is_ultra_restricted` = TODO this possibly a custom setting construct, see https://github.com/slackhq/slack-api-docs/search?p=2&q=restricted&type=&utf8=%E2%9C%93
+   There is also guest with access to one or several channels
+   in Zulip:
+   * `is_realm_admin`
+   * `is_staff`: barely documented[7], but is functionally equivalent to a
+     server admin, as seen in `require_server_admin` function in
+     zerver/decorator.py
+   * `is_api_super_user`: "Can send messages as other users for mirroring"[8]
+   * `is_superuser`: is not used, the code uses `is_api_super_user`. See
+     `zerver/views/messages.py`
+   Slack's permission hierarchy is more granular.
+
+   Currently the mapping is `is_owner` -> `is_realm_admin`, `is_admin` -> `is_staff`
+2. Pins/stars security model
+   Slack pins are stored in each channels.
+   Zulip stars are known only to each users, stored in `zerver_usermessage`.
+3. Streams/channels descriptions
+   - Zulip has stream description
+   - Slack has channel topic and purpose
+4. user presence timestamps
+   Zulip has `date_joined`, `last_reminder`, `last_login`.
+   Slack has `status`.
+5. user subscription in channel
+   Slack: the timestamp when a user is subscribed to a channel is logged as a
+   message in a channel, much like in IRC. This is not the case in Zulip so as
+   not to pollute the thread with join/left announcement.
+https://github.com/zulip/zulip/blob/2012913cc13332aa8c14825a042ea11b4b2cfa79/zerver/lib/actions.py#L533
+6. "user agent" of a message
+   Zulip has `HUMAN_CLIENT` ("Android", "ios", "website") and `API`
+   Slack has none
+   comment: `is_bot` is likely redundant with this
+
 ## Usage
 
 To convert a slack data, let the zip file be `slack_data.zip`, then
@@ -43,3 +85,6 @@ To deploy the data onto an existing fresh Zulip repo,
 3. Zulip's existing users and channels import https://github.com/zulip/zulip/tree/master/api/integrations/slack
 4. https://get.slack.help/hc/en-us/articles/220556107-Understand-Slack-data-exports
 5. https://github.com/zulip/zulip/issues/908#issuecomment-247719383
+6. https://get.slack.help/hc/en-us/articles/201314026-Roles-and-permissions-in-Slack
+7. http://zulip.readthedocs.io/en/latest/analytics.html?highlight=staff
+8. https://github.com/zulip/zulip/blob/2012913cc13332aa8c14825a042ea11b4b2cfa79/zerver/models.py#L266
