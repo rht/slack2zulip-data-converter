@@ -21,8 +21,12 @@ There are two approaches:
    well-fleshed-out and well-tested data export/import. And Slack already has a
    data.zip export.
 
-### footnote
 1. Still pending to be fleshed out with ActivityPub / Linked Data Notifications
+
+### Donate
+
+See https://rht.github.io/#donate.
+
 
 ## Term Mapping
 
