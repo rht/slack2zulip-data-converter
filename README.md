@@ -23,7 +23,7 @@ There are two approaches:
 
 1. Still pending to be fleshed out with ActivityPub / Linked Data Notifications
 
-### Donate
+### Funding Q3 2017
 
 See https://rht.github.io/#donate.
 
@@ -78,10 +78,11 @@ https://github.com/zulip/zulip/blob/2012913cc13332aa8c14825a042ea11b4b2cfa79/zer
 
 ## Usage
 
+See https://my.slack.com/services/export for the step to export a Slack data.
 To convert a slack data, let the zip file be `slack_data.zip`, then
-1. Unzip it to a folder residing in this repo's directory
-2. `./slack2zulip.py slack_data`
-3. `zip -r zulip_data.zip zulip_data`
+`./slack2zulip.py slack_data.zip`
+
+which outputs `zulip_data.zip`.
 
 To deploy the data onto an existing fresh Zulip repo,
 `./manage.py import zulip_data.zip`

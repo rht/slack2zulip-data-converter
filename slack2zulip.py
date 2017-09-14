@@ -5,6 +5,7 @@ import hashlib
 import sys
 import argparse
 import shutil
+import subprocess
 
 
 # Transported from https://github.com/zulip/zulip/blob/master/zerver/lib/export.py
@@ -27,11 +28,13 @@ def users2zerver_userprofile(slack_dir, realm_id, timestamp, domain_name):
         if 'email' not in profile:
             email = (hashlib.blake2b(user['real_name'].encode()).hexdigest() +
                      "@%s" % domain_name)
+        else:
+            email = profile['email']
         userprofile = dict(
             enable_desktop_notifications=DESKTOP_NOTIFICATION,
-            is_staff=user['is_admin'],
+            is_staff=user.get('is_admin', False),
             # avatar_source='G',
-            is_bot=user['is_bot'],
+            is_bot=user.get('is_bot', False),
             avatar_version=1,
             autoscroll_forever=False,
             default_desktop_notifications=True,
@@ -42,17 +45,17 @@ def users2zerver_userprofile(slack_dir, realm_id, timestamp, domain_name):
             is_mirror_dummy=False,
             pointer=-1,
             default_events_register_stream=None,
-            is_realm_admin=user['is_owner'],
+            is_realm_admin=user.get('is_owner', False),
             invites_granted=0,
             enter_sends=True,
-            bot_type=1 if user['is_bot'] else None,
+            bot_type=1 if user.get('is_bot', False) else None,
             enable_stream_sounds=False,
             is_api_super_user=False,
             rate_limits="",
             last_login=timestamp,
             tos_version=None,
             default_all_public_streams=False,
-            full_name=user['real_name'],
+            full_name=user.get('real_name', user['name']),
             twenty_four_hour_time=False,
             groups=[],  # TODO
             muted_topics=[],
@@ -78,7 +81,7 @@ def users2zerver_userprofile(slack_dir, realm_id, timestamp, domain_name):
             emojiset="google",
             emoji_alt_code=False,
             realm=realm_id,  # TODO
-            quota=1073741824,  # TODO
+            quota=1073741824,  # harcoded as per https://github.com/zulip/zulip/blob/e1498988d9094961e6f9988fb308b3e7310a8e74/zerver/migrations/0059_userprofile_quota.py#L18
             invites_used=0,
             id=user_id_count)
 
@@ -185,6 +188,10 @@ def channelmessage2zerver_message(slack_dir, channel, added_users, added_channel
         msgs = json.load(open(slack_dir + '/%s/%s' % (channel, json_name)))
         for msg in msgs:
             text = msg['text']
+            try:
+                user = msg.get('user', msg['file']['user'])
+            except:
+                user = msg['user']
             zulip_message = dict(
                 sending_client=1,
                 rendered_content_version=1,  # TODO ?? doublecheck
@@ -194,7 +201,7 @@ def channelmessage2zerver_message(slack_dir, channel, added_users, added_channel
                 id=msg_id_count,
                 has_attachment=False,  # attachment will be posted in the subsequent message; this is how Slack does it, less like email
                 edit_history=None,
-                sender=added_users[msg['user']],  # map slack id to zulip id
+                sender=added_users[user],  # map slack id to zulip id
                 content=text,  # TODO sanitize slack text, which contains <@msg['user']|short_name>
                 rendered_content=text,  # TODO slack doesn't cache this, check whether text is rendered
                 recipient=added_channels[channel],
@@ -265,6 +272,9 @@ def main(slack_dir):
 
     # TODO
     # attachments
+
+    # compress the folder
+    subprocess.check_call(['zip', '-r', output_dir + '.zip', output_dir])
 
     sys.exit(0)
 
