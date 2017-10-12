@@ -53,7 +53,8 @@ Most parts of the structures can be mapped 1-to-1, with few exceptions:
    Slack's permission hierarchy is more granular.
    Currently the mapping is `is_owner` -> `is_realm_admin`, `is_admin` -> `is_staff`
 2. Pins/stars security model
-   Slack pins are stored in each channels.
+   Slack pins are stored in each channels. Slack do have stars which are known
+   only to the users.
    Zulip stars are known only to each users, stored in `zerver_usermessage`.
 3. Streams/channels descriptions
    - Zulip has stream description
